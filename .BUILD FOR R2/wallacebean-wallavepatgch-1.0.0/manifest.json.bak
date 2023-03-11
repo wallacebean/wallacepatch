@@ -1,0 +1,9 @@
+{
+    "name": "WallacePatch",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/wallacebean/WallacePatch",
+    "description": "come one come all to my awesome ultra shitty mod where i change things about the game and you are fucked",
+    "dependencies": [
+    "BepInEx-BepInExPack_LLBlaze-5.4.1900"
+    ]
+}
