@@ -13,7 +13,7 @@ using Abilities;
 
 namespace wallacepatch
 {
-	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.4")]
+	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.5")]
 	public class Plugin : BaseUnityPlugin
 	{
 		private void Awake()
@@ -49,9 +49,9 @@ namespace wallacepatch
 			//harmony.PatchAll(typeof(BagCheckActivationPatch)); //lags game
 			//harmony.PatchAll(typeof(PongCheckActivationPatch)); //lags game
 			//harmony.PatchAll(typeof(BALLSetEntityValuesPatch)); //crashes game
-			//harmony.PatchAll(typeof(CONSTRUCTORDownAirSwingAbilityPatch)); //doesnt work
-			//harmony.PatchAll(typeof(CONSTRUCTOREatAbilityPatch)); //doesnt work
-			//harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch)); //doesnt work
+			harmony.PatchAll(typeof(CONSTRUCTORDownAirSwingAbilityPatch)); //doesnt work
+			harmony.PatchAll(typeof(CONSTRUCTOREatAbilityPatch)); //doesnt work
+			harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch)); //doesnt work
 
 		}
 	}
@@ -856,9 +856,9 @@ namespace wallacepatch
 	{
 		[HarmonyPatch(typeof(PongAbility), nameof(PongAbility.CheckActivation))]
 		[HarmonyPrefix]
-		public static bool CheckActivation_Prefix(PongAbility __instance, ref bool __return, bool newPress = true)
+		public static bool CheckActivation_Prefix(PongAbility __instance, ref bool __result, bool newPress = true)
 		{
-			__return = __instance.CheckActivation(newPress);
+			__result = global::HHBCPNCDNDH.HPLPMEAOJPM(__instance.entity.RemainingHitstunTime(), global::HHBCPNCDNDH.NKKIFJJEPOL(1.75m)) && __instance.CheckActivation(newPress);
 			return false;
 		}
 	}
@@ -867,9 +867,9 @@ namespace wallacepatch
 	{
 		[HarmonyPatch(typeof(ShadowAbility), nameof(ShadowAbility.CheckActivation))]
 		[HarmonyPrefix]
-		public static bool CheckActivation_Prefix(ShadowAbility __instance, ref bool __return, bool newPress = true)
+		public static bool CheckActivation_Prefix(ShadowAbility __instance, ref bool __result, bool newPress = true)
 		{
-			__return = __instance.CheckActivation(newPress);
+			__result = global::HHBCPNCDNDH.HPLPMEAOJPM(__instance.entity.RemainingHitstunTime(), global::HHBCPNCDNDH.NKKIFJJEPOL(1.75m)) && __instance.CheckActivation(newPress);
 			return false;
 		}
 	}
@@ -975,27 +975,28 @@ namespace wallacepatch
 
 	class CONSTRUCTORTauntAbilityPatch
 	{
-		[HarmonyPatch(typeof(TauntAbility), "TauntAbility", MethodType.Constructor)]
-		[HarmonyPrefix]
-		public static bool Prefix(TauntAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
-		{
-			__instance.Init("taunt", abilityEntity, InputAction.TAUNT, AbilityGroundType.GROUND, int.MaxValue, false, PlayerState.ACTION);
-			__instance.AddState(new AbilityState("TAUNT1", "taunt", __instance.entity.expressTauntPhase1Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
-			__instance.AddState(new AbilityState("TAUNT2", string.Empty, __instance.entity.expressTauntPhase2Duration, new List<string>
+			[HarmonyPatch(typeof(TauntAbility), MethodType.Constructor, new Type[] { typeof(AbilityEntity) })]
+			[HarmonyPrefix]
+			public static bool Prefix(TauntAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
+			{
+				__instance.Init("taunt", abilityEntity, InputAction.TAUNT, AbilityGroundType.GROUND, int.MaxValue, false, PlayerState.ACTION);
+				__instance.AddState(new AbilityState("TAUNT1", "taunt", __instance.entity.expressTauntPhase1Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
+				__instance.AddState(new AbilityState("TAUNT2", string.Empty, __instance.entity.expressTauntPhase2Duration, new List<string>
 			{
 				"TAUNT_ACTION_HITBOX"
 			}, AbilityGroundType.AIR)).castShadowForBag = false;
-			__instance.AddSingleState(new AbilityState("TAUNT_IDLE", "tauntIdle", HHBCPNCDNDH.NKKIFJJEPOL(AbilityState.NO_DURATION), new List<string>
+				__instance.AddSingleState(new AbilityState("TAUNT_IDLE", "tauntIdle", HHBCPNCDNDH.NKKIFJJEPOL(AbilityState.NO_DURATION), new List<string>
 			{
 				"TAUNT_ACTION_HITBOX"
 			}, AbilityGroundType.AIR)).castShadowForBag = false;
-			__instance.AddSingleState(new AbilityState("TAUNT_IDLE_OUT", "tauntOut", __instance.entity.expressTauntPhase2Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
-			return false;
-		}
+				__instance.AddSingleState(new AbilityState("TAUNT_IDLE_OUT", "tauntOut", __instance.entity.expressTauntPhase2Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
+				return false;
+			}
+		
 	}
 	class CONSTRUCTOREatAbilityPatch
 	{
-		[HarmonyPatch(typeof(EatAbility), "EatAbility", MethodType.Constructor)]
+		[HarmonyPatch(typeof(EatAbility), MethodType.Constructor, new Type[] { typeof(AbilityEntity) })]
 		[HarmonyPrefix]
 		public static bool Prefix(EatAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
 		{
@@ -1025,7 +1026,7 @@ namespace wallacepatch
 	}
 	class CONSTRUCTORDownAirSwingAbilityPatch
 	{
-		[HarmonyPatch(typeof(DownAirSwingAbility), MethodType.Constructor)]
+		[HarmonyPatch(typeof(DownAirSwingAbility), MethodType.Constructor, new Type[] { typeof(AbilityEntity) })]
 		[HarmonyPrefix]
 		public static bool Prefix(DownAirSwingAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
 		{
