@@ -13,7 +13,7 @@ using Abilities;
 
 namespace wallacepatch
 {
-	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.1")]
+	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.4")]
 	public class Plugin : BaseUnityPlugin
 	{
 		private void Awake()
@@ -21,6 +21,7 @@ namespace wallacepatch
 			Logger.LogDebug("Patching effects settings...");
 
 			var harmony = new Harmony("us.wallace.plugins.llb.wallacepatch");
+
 			harmony.PatchAll(typeof(HandleHitboxHitPatch));
 			harmony.PatchAll(typeof(PLAYERSetEntityAbilitiesPatch));
 			harmony.PatchAll(typeof(DNAHandleHitsPatch));
@@ -48,9 +49,12 @@ namespace wallacepatch
 			//harmony.PatchAll(typeof(BagCheckActivationPatch)); //lags game
 			//harmony.PatchAll(typeof(PongCheckActivationPatch)); //lags game
 			//harmony.PatchAll(typeof(BALLSetEntityValuesPatch)); //crashes game
+			//harmony.PatchAll(typeof(CONSTRUCTORDownAirSwingAbilityPatch)); //doesnt work
+			//harmony.PatchAll(typeof(CONSTRUCTOREatAbilityPatch)); //doesnt work
+			//harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch)); //doesnt work
+
 		}
 	}
-
 	class HandleHitboxHitPatch
 	{
 		[HarmonyPatch(typeof(HittingEntity), nameof(HittingEntity.HandleHitboxHit))]
@@ -61,15 +65,27 @@ namespace wallacepatch
 			bool flag = hitEntity.IsBall();
 			EntityType entityType = hitEntity.entityType;
 			BallEntity ballEntity = (!flag) ? null : (hitEntity as BallEntity);
-			if (flag && (__instance.MatchPowerupIs(Powerup.SHOCK, PowerupPhase.ANY) || ballEntity.ballData.ballState == BallState.BUBBLEBALL) && hitEntity.GetLastPlayerHitter() != __instance && __instance.character != global::Character.DUMMY)
+			if (flag && (__instance.MatchPowerupIs(LLHandlers.Powerup.SHOCK, LLHandlers.PowerupPhase.ANY) || ballEntity.ballData.ballState == BallState.BUBBLEBALL) && hitEntity.GetLastPlayerHitter() != __instance && __instance.character != global::Character.DUMMY)
 			{
 				ballEntity.StartHitstun(__instance.parryHitstunDuration, (ballEntity.ballData.ballState != BallState.BUBBLEBALL) ? HitstunState.WALL_STUN : HitstunState.BUBBLE_WALL_STUN);
 				ballEntity.DeflectClashPlayer((PlayerEntity)__instance, boxName);
-				return true;
+				
 			}
-			if (!__instance.MatchPowerupIs(Powerup.PHANTOM, PowerupPhase.ANY) && flag)
+			if (!__instance.MatchPowerupIs(LLHandlers.Powerup.PHANTOM, LLHandlers.PowerupPhase.ANY) && flag)
 			{
 				global::IBGCBLLKIHA position = hitEntity.GetPosition();
+				global::IBGCBLLKIHA ibgcbllkiha = global::IBGCBLLKIHA.FCKBPDNEAOG(playerHitbox.bounds.KHBAPGIEOIC, global::IBGCBLLKIHA.FCGOICMIBEA(playerHitbox.bounds.IACOKHPMNGN, global::HHBCPNCDNDH.NKKIFJJEPOL(20)));
+				global::IBGCBLLKIHA ibgcbllkiha2 = global::IBGCBLLKIHA.GAFCIOAEGKD(playerHitbox.bounds.MOGDHBGHAOA, global::IBGCBLLKIHA.FCGOICMIBEA(playerHitbox.bounds.IACOKHPMNGN, global::HHBCPNCDNDH.NKKIFJJEPOL(20)));
+				if (global::HHBCPNCDNDH.EAOICALCHJI(hitEntity.entityData.velocity.GCPKPHMKLBN, global::HHBCPNCDNDH.DBOMOJGKIFI))
+				{
+					position.GCPKPHMKLBN = global::HHBCPNCDNDH.ANJPNFDPHFP(position.GCPKPHMKLBN, ibgcbllkiha.GCPKPHMKLBN);
+					position.GCPKPHMKLBN = global::HHBCPNCDNDH.BBGBJJELCFJ(position.GCPKPHMKLBN, ibgcbllkiha2.GCPKPHMKLBN);
+				}
+				if (global::HHBCPNCDNDH.EAOICALCHJI(hitEntity.entityData.velocity.CGJJEHPPOAN, global::HHBCPNCDNDH.DBOMOJGKIFI))
+				{
+					position.CGJJEHPPOAN = global::HHBCPNCDNDH.ANJPNFDPHFP(position.CGJJEHPPOAN, ibgcbllkiha.CGJJEHPPOAN);
+					position.CGJJEHPPOAN = global::HHBCPNCDNDH.BBGBJJELCFJ(position.CGJJEHPPOAN, ibgcbllkiha2.CGJJEHPPOAN);
+				}
 				hitEntity.SetPosition(position);
 				hitEntity.entityData.prePosition = __instance.GetPosition();
 				hitEntity.ClampWithinStage();
@@ -82,24 +98,24 @@ namespace wallacepatch
 			if (flag && global::JOMBNFKIHIC.GIGAKBJGFDI.PNJOKAICMNN == global::GameMode.VOLLEYBALL && ballEntity.ballData.volleyballCombos[__instance.playerIndex] > 3)
 			{
 				global::NCMFHODLNAJ.GIGAKBJGFDI.NDIODLNFCHC((__instance.attackingData.team != global::BGHNEHPFHGC.PDOIGCCJJEO) ? global::BGHNEHPFHGC.PDOIGCCJJEO : global::BGHNEHPFHGC.EHPJJADIPNG, __instance.playerIndex);
-				__instance.PlaySfx(Sfx.KILL);
+				__instance.PlaySfx(LLHandlers.Sfx.KILL);
 				global::GameCamera.instance.StartShake(global::HHBCPNCDNDH.NKKIFJJEPOL(0.67m), global::HHBCPNCDNDH.NKKIFJJEPOL(0.4m));
 				__instance.effectHandler.CreateHitBallBehindEffect(ballEntity.GetPosition());
 				ballEntity.CreateDeadBallEffect();
 				ballEntity.SetBallState(BallState.DEAD, HitstunState.NONE);
-				return true;
+				
 			}
 			__instance.AddTrackedHitEntityID(hitEntity.entityID);
 			__instance.RallyEvent(hitEntity);
 			hitEntity.HitByTeam(__instance.attackingData.team);
 			int lastHitterIndex = hitEntity.hitableData.lastHitterIndex;
 			hitEntity.hitableData.lastHitterIndex = __instance.playerIndex;
-			if (flag && __instance.MatchPowerupIs(Powerup.HEAL, PowerupPhase.ANY))
+			if (flag && __instance.MatchPowerupIs(LLHandlers.Powerup.HEAL, LLHandlers.PowerupPhase.ANY))
 			{
 				__instance.abilityData.hitSomething = true;
 				__instance.GiveBall(BallState.STICK_TO_PLAYER_POWERUP, ballEntity, false);
-				__instance.playerHandler.GetPlayerEntity(lastHitterIndex).playerData.powerup = Powerup.NONE;
-				__instance.abilityData.powerup = Powerup.HEAL;
+				__instance.playerHandler.GetPlayerEntity(lastHitterIndex).playerData.powerup = LLHandlers.Powerup.NONE;
+				__instance.abilityData.powerup = LLHandlers.Powerup.HEAL;
 			}
 			else
 			{
@@ -129,7 +145,7 @@ namespace wallacepatch
 			__instance.UpdateUnityTransform();
 			if (flag && __instance.player.ALBOPCLADGN)
 			{
-				global::DCKIMOBPGBF ai = AIHandler.instance.GetAI(__instance.playerIndex);
+				global::DCKIMOBPGBF ai = LLHandlers.AIHandler.instance.GetAI(__instance.playerIndex);
 				if (ai != null)
 				{
 					ai.DDHBGKCDHFP(ballEntity);
@@ -139,6 +155,7 @@ namespace wallacepatch
 		}
 
 	}
+
 
 	class DNAHandleHitsPatch
 	{
@@ -266,26 +283,26 @@ namespace wallacepatch
 	{
 		[HarmonyPatch(typeof(GetUpGrabAbility), nameof(GetUpGrabAbility.SetAbilityState))]
 		[HarmonyPrefix]
-		public static bool SetAbilityState_Prefix(GetUpGrabAbility __instance, string state)
+		public static bool SetAbilityState_Prefix(GetUpGrabAbility __instance, ref bool __return, string state)
 
 		{
 			if (state == "GET_UP_GRAB_PRE")
 			{
-				__instance.data.canBeHitByBall = false;
+				__return =  __instance.data.canBeHitByBall = false;
 
 			}
 			if (state == "GET_UP_GRAB_DURING")
 			{
-				__instance.data.inGetUpBlaze = true;
-				__instance.data.canBeHitByBall = false;
+				__return = __instance.data.inGetUpBlaze = true;
+				__return = __instance.data.canBeHitByBall = false;
 				global::LLHandlers.EffectHandler.instance.CreateGetUpBlazeEffect(__instance.entity.GetPosition(), __instance.entity.GetTeam());
 				__instance.entity.PlaySfx(global::LLHandlers.Sfx.GETUPGRAB); global::LLHandlers.EffectHandler.instance.CreateGetUpBlazeEffect(__instance.entity.GetPosition(), __instance.entity.GetTeam());
 				__instance.entity.PlaySfx(global::LLHandlers.Sfx.GETUPGRAB);
 			}
 			else
 			{
-				__instance.data.inGetUpBlaze = false;
-				__instance.data.canBeHitByBall = true;
+				__return = __instance.data.inGetUpBlaze = false;
+				__return = __instance.data.canBeHitByBall = true;
 			}
 			__instance.SetAbilityState(state);
 			return false;
@@ -431,7 +448,7 @@ namespace wallacepatch
 			__instance.CreateHurtbox("NORMAL_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, __instance.pxHeight), fpixel_SIZE), global::IBGCBLLKIHA.DBOMOJGKIFI);
 			__instance.CreateHurtbox("HALF_CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, 96), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.DEKDADEGAIK, global::HHBCPNCDNDH.NKKIFJJEPOL(21)), fpixel_SIZE));
 			__instance.CreateHurtbox("CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(80, 64), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.DEKDADEGAIK, global::HHBCPNCDNDH.NKKIFJJEPOL(37)), fpixel_SIZE));
-			
+
 			global::IBGCBLLKIHA sizeSwing = new global::IBGCBLLKIHA(110, __instance.pxHeight);
 			global::IBGCBLLKIHA offsetSwing = new global::IBGCBLLKIHA(55, 0);
 			global::IBGCBLLKIHA acihfibjnkm = new global::IBGCBLLKIHA(110, 85);
@@ -671,7 +688,7 @@ namespace wallacepatch
 			__instance.CreateHurtbox("NORMAL_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, __instance.pxHeight), fpixel_SIZE), global::IBGCBLLKIHA.DBOMOJGKIFI);
 			__instance.CreateHurtbox("HALF_CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, 96), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.DEKDADEGAIK, global::HHBCPNCDNDH.NKKIFJJEPOL(21)), fpixel_SIZE));
 			__instance.CreateHurtbox("CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(80, 64), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.DEKDADEGAIK, global::HHBCPNCDNDH.NKKIFJJEPOL(37)), fpixel_SIZE));
-			
+
 			__instance.graffitiBox = __instance.CreateHitbox("GRAFFITI_HITBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(150, 78), fpixel_SIZE), global::IBGCBLLKIHA.DBOMOJGKIFI, global::Abilities.AbilityState.NO_ABILITYSTATE, false, default(global::HHBCPNCDNDH), string.Empty);
 			__instance.graffitiBox.parentless = true;
 			__instance.graffitiBox.checkByHand = true;
@@ -750,14 +767,14 @@ namespace wallacepatch
 			__instance.CreateHurtbox("NORMAL_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, 148), fpixel_SIZE), global::IBGCBLLKIHA.DBOMOJGKIFI);
 			__instance.CreateHurtbox("HALF_CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, 110), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.GGFFJDILCDA, global::HHBCPNCDNDH.NKKIFJJEPOL(-19)), fpixel_SIZE));
 			__instance.CreateHurtbox("CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(80, 74), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.GGFFJDILCDA, global::HHBCPNCDNDH.NKKIFJJEPOL(-38)), fpixel_SIZE));
-			__instance.CreateHurtbox("CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(80, 74), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.GGFFJDILCDA, global::HHBCPNCDNDH.NKKIFJJEPOL(-38)), fpixel_SIZE));
+			__instance.CreateHurtbox("LANDING_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(80, 74), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.GGFFJDILCDA, global::HHBCPNCDNDH.NKKIFJJEPOL(-38)), fpixel_SIZE));
 			global::IBGCBLLKIHA sizeSwing = new global::IBGCBLLKIHA(124, 148);
 			global::IBGCBLLKIHA offsetSwing = new global::IBGCBLLKIHA(57, 0);
 			global::IBGCBLLKIHA acihfibjnkm = new global::IBGCBLLKIHA(110, 64);
 			global::IBGCBLLKIHA acihfibjnkm2 = new global::IBGCBLLKIHA(0, 106);
 			__instance.SetFrontHitboxesAndParryBoxes(sizeSwing, offsetSwing);
 			__instance.CreateHitbox("SMASH_TOP_HITBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(acihfibjnkm, fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(acihfibjnkm2, fpixel_SIZE), "SMASH_OVERHEAD_HIT", true, default(global::HHBCPNCDNDH), string.Empty);
-			__instance.CreateHitbox("LANDING_HURTBOX", new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.AJOCFFLIIIH(acihfibjnkm.GCPKPHMKLBN, fpixel_SIZE), global::HHBCPNCDNDH.NKKIFJJEPOL(1.1m)), global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.NKKIFJJEPOL(170), fpixel_SIZE)), new global::IBGCBLLKIHA(global::HHBCPNCDNDH.NKKIFJJEPOL(0), global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.NKKIFJJEPOL(-95), fpixel_SIZE)), "DOWN_AIR_HIT", false, default(global::HHBCPNCDNDH), string.Empty);
+			__instance.CreateHitbox("DOWN_AIR_HITBOX", new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.AJOCFFLIIIH(acihfibjnkm.GCPKPHMKLBN, fpixel_SIZE), global::HHBCPNCDNDH.NKKIFJJEPOL(1.1m)), global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.NKKIFJJEPOL(170), fpixel_SIZE)), new global::IBGCBLLKIHA(global::HHBCPNCDNDH.NKKIFJJEPOL(0), global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.NKKIFJJEPOL(-95), fpixel_SIZE)), "DOWN_AIR_HIT", false, default(global::HHBCPNCDNDH), string.Empty);
 			global::GameplayEntities.PlayerHitbox playerHitbox = __instance.CreateHitbox("BUNT_HITBOX", new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.GCPKPHMKLBN, fpixel_SIZE), global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, global::HHBCPNCDNDH.NKKIFJJEPOL(0.75m)), fpixel_SIZE)), new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.GCPKPHMKLBN, fpixel_SIZE), global::HHBCPNCDNDH.FCKBPDNEAOG(offsetSwing.CGJJEHPPOAN, global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, global::HHBCPNCDNDH.NKKIFJJEPOL(0.125m)), fpixel_SIZE))), "BUNT_HIT", false, global::HHBCPNCDNDH.NKKIFJJEPOL(0.08m), string.Empty);
 			playerHitbox.bunts = true;
 			playerHitbox = __instance.CreateHitbox("BUNT_HITBOX2", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(89, 77), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(global::HHBCPNCDNDH.NKKIFJJEPOL(74.5m), global::HHBCPNCDNDH.NKKIFJJEPOL(75.5m)), fpixel_SIZE), "BUNT_HIT", false, global::HHBCPNCDNDH.NKKIFJJEPOL(0.08m), string.Empty);
@@ -839,10 +856,10 @@ namespace wallacepatch
 	{
 		[HarmonyPatch(typeof(PongAbility), nameof(PongAbility.CheckActivation))]
 		[HarmonyPrefix]
-		public static bool CheckActivation_Prefix(PongAbility __instance, bool newPress = true)
+		public static bool CheckActivation_Prefix(PongAbility __instance, ref bool __return, bool newPress = true)
 		{
-			return __instance.CheckActivation(newPress);
-
+			__return = __instance.CheckActivation(newPress);
+			return false;
 		}
 	}
 
@@ -850,10 +867,10 @@ namespace wallacepatch
 	{
 		[HarmonyPatch(typeof(ShadowAbility), nameof(ShadowAbility.CheckActivation))]
 		[HarmonyPrefix]
-		public static bool CheckActivation_Prefix(ShadowAbility __instance, bool newPress = true)
+		public static bool CheckActivation_Prefix(ShadowAbility __instance, ref bool __return, bool newPress = true)
 		{
-			return __instance.CheckActivation(newPress);
-
+			__return = __instance.CheckActivation(newPress);
+			return false;
 		}
 	}
 
@@ -955,4 +972,111 @@ namespace wallacepatch
 			return false;
 		}
 	}
+
+	class CONSTRUCTORTauntAbilityPatch
+	{
+		[HarmonyPatch(typeof(TauntAbility), "TauntAbility", MethodType.Constructor)]
+		[HarmonyPrefix]
+		public static bool Prefix(TauntAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
+		{
+			__instance.Init("taunt", abilityEntity, InputAction.TAUNT, AbilityGroundType.GROUND, int.MaxValue, false, PlayerState.ACTION);
+			__instance.AddState(new AbilityState("TAUNT1", "taunt", __instance.entity.expressTauntPhase1Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
+			__instance.AddState(new AbilityState("TAUNT2", string.Empty, __instance.entity.expressTauntPhase2Duration, new List<string>
+			{
+				"TAUNT_ACTION_HITBOX"
+			}, AbilityGroundType.AIR)).castShadowForBag = false;
+			__instance.AddSingleState(new AbilityState("TAUNT_IDLE", "tauntIdle", HHBCPNCDNDH.NKKIFJJEPOL(AbilityState.NO_DURATION), new List<string>
+			{
+				"TAUNT_ACTION_HITBOX"
+			}, AbilityGroundType.AIR)).castShadowForBag = false;
+			__instance.AddSingleState(new AbilityState("TAUNT_IDLE_OUT", "tauntOut", __instance.entity.expressTauntPhase2Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
+			return false;
+		}
+	}
+	class CONSTRUCTOREatAbilityPatch
+	{
+		[HarmonyPatch(typeof(EatAbility), "EatAbility", MethodType.Constructor)]
+		[HarmonyPrefix]
+		public static bool Prefix(EatAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
+		{
+			__instance.Init("eat", abilityEntity, global::LLHandlers.InputAction.SWING, global::Abilities.AbilityGroundType.BOTH, int.MaxValue, false, global::GameplayEntities.PlayerState.ACTION);
+			__instance.SetSettingsForSpecialMove("eat");
+			__instance.activatedByHand = false;
+			global::HHBCPNCDNDH gcpkphmklbn = global::HHBCPNCDNDH.NKKIFJJEPOL(0.0166667m);
+			__instance.spitWindUpDuration = global::HHBCPNCDNDH.AJOCFFLIIIH(gcpkphmklbn, global::HHBCPNCDNDH.NKKIFJJEPOL(6));
+			__instance.spitDuration = global::HHBCPNCDNDH.AJOCFFLIIIH(gcpkphmklbn, global::HHBCPNCDNDH.NKKIFJJEPOL(7));
+			__instance.spitOutDuration = global::HHBCPNCDNDH.AJOCFFLIIIH(gcpkphmklbn, global::HHBCPNCDNDH.NKKIFJJEPOL(13));
+			__instance.eatDuration = global::HHBCPNCDNDH.AJOCFFLIIIH(gcpkphmklbn, global::HHBCPNCDNDH.NKKIFJJEPOL(10));
+			__instance.AddState(new global::Abilities.AbilityState("CROC_BALL_EAT", "eat", __instance.eatDuration, string.Empty, global::Abilities.AbilityGroundType.NONE)).blinkColorOutline = true;
+			__instance.AddState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "CROC_BALL_MOVE", global::Abilities.AbilityState.NO_ABILITYSTATE, string.Empty, global::HHBCPNCDNDH.NKKIFJJEPOL(global::Abilities.AbilityState.NO_DURATION), null, global::Abilities.AbilityGroundType.BOTH)).blinkColorOutline = true;
+			__instance.AddSingleState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "CROC_BALL_SPIT_WIND_UP", "CROC_BALL_SPIT", "spitWindUp", __instance.spitWindUpDuration, null, global::Abilities.AbilityGroundType.NONE)).blinkColorOutline = true;
+			__instance.AddSingleState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "CROC_BALL_EAT_CORPSE", global::Abilities.AbilityState.NO_ABILITYSTATE, "eat", __instance.eatDuration, null, global::Abilities.AbilityGroundType.NONE));
+			global::Abilities.AbilityState abilityState = __instance.AddSingleState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "CROC_BALL_SPIT", "CROC_BALL_SPIT_FOLLOW_THROUGH", string.Empty, __instance.spitDuration, null, global::Abilities.AbilityGroundType.NONE));
+			abilityState.blinkColorOutline = true;
+			abilityState.noAim = true;
+			abilityState = __instance.AddSingleState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "CROC_BALL_SPIT_DEFLECT", "CROC_BALL_SPIT_FOLLOW_THROUGH", string.Empty, __instance.spitDuration, null, global::Abilities.AbilityGroundType.NONE));
+			abilityState.blinkColorOutline = true;
+			abilityState.noAim = true;
+			abilityState = __instance.AddSingleState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "CROC_BALL_SPIT_FOLLOW_THROUGH", global::Abilities.AbilityState.NO_ABILITYSTATE, string.Empty, __instance.spitOutDuration, null, global::Abilities.AbilityGroundType.NONE));
+			abilityState.noAim = true;
+			__instance.ballSpitOffset = global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(45, 15), global::World.FPIXEL_SIZE);
+			return false;
+		}
+	}
+	class CONSTRUCTORDownAirSwingAbilityPatch
+	{
+		[HarmonyPatch(typeof(DownAirSwingAbility), MethodType.Constructor)]
+		[HarmonyPrefix]
+		public static bool Prefix(DownAirSwingAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
+		{
+			__instance.Init("downAirSwing", abilityEntity, LLHandlers.InputAction.SWING, AbilityGroundType.AIR, LLHandlers.InputAction.DOWN, false, GameplayEntities.PlayerState.ACTION);
+			__instance.isSwingingTypeAbility = true;
+			if (global::DebugSettings.instance.testAirAttacksOnGround)
+			{
+				__instance.activateOnGroundType = AbilityGroundType.BOTH;
+				__instance.directionalInput = LLHandlers.InputAction.NONE;
+			}
+			__instance.swishOffset = global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(0, -0x5A), global::World.FPIXEL_SIZE);
+			global::Character character = __instance.entity.character;
+			int frames;
+			int frames2;
+			int frames3;
+			int frames4;
+			if (character != global::Character.CANDY)
+			{
+				frames = 4;
+				frames2 = 0xB;
+				frames3 = 3;
+				frames4 = 9;
+			}
+			else
+			{
+				frames = 4;
+				frames2 = 0xB;
+				frames3 = 3;
+				frames4 = 9;
+			}
+			AbilityState abilityState = __instance.AddState(new AbilityState("DOWN_AIR_WIND_UP", "downSwing", __instance.framesDuration60fps(frames), "DOWN_AIR_HITBOX", AbilityGroundType.AIR));
+			abilityState.canBufferSpecial = true;
+			abilityState.canHitItems = false;
+			abilityState = __instance.AddState(new AbilityState("DOWN_AIR_WOOSH", string.Empty, __instance.framesDuration60fps(frames2), "DOWN_AIR_HITBOX", AbilityGroundType.AIR));
+			abilityState.canBufferSpecial = true;
+			abilityState.castShadowForBag = false;
+			abilityState = __instance.AddState(new AbilityState("DOWN_AIR_FOLLOW_THROUGH", "downSwingOut", __instance.framesDuration60fps(frames3), "DOWN_AIR_HITBOX", AbilityGroundType.AIR));
+			abilityState.canBufferSpecial = true;
+			abilityState.hitboxesOffAfterHitSomething = true;
+			abilityState.castShadowForBag = false;
+			abilityState = __instance.AddState(new AbilityState("DOWN_AIR_OUT", string.Empty, __instance.framesDuration60fps(frames4), string.Empty, AbilityGroundType.AIR));
+			abilityState.castShadowForBag = false;
+			abilityState = __instance.AddSingleState(new AbilityState(GameplayEntities.PlayerState.HITPAUSE, "DOWN_AIR_HIT", "DOWN_AIR_FOLLOW_THROUGH", "downSwingHit", new List<string>
+			{
+				"DOWN_AIR_HITBOX"
+			}, AbilityGroundType.AIR));
+			abilityState.castShadowForBag = false;
+			abilityState = __instance.AddSingleState(new AbilityState(GameplayEntities.PlayerState.ACTION, "DOWN_AIR_LAND", AbilityState.NO_ABILITYSTATE, "abilityLand", __instance.entity.framesDuration60fps(0xC), null, AbilityGroundType.AIR));
+			abilityState.moveableOn = AbilityGroundType.NONE;
+			return false;
+		}
+	}
 }
+
