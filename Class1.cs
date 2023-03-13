@@ -13,7 +13,7 @@ using Abilities;
 
 namespace wallacepatch
 {
-	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.5")]
+	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.7")]
 	public class Plugin : BaseUnityPlugin
 	{
 		private void Awake()
@@ -50,8 +50,9 @@ namespace wallacepatch
 			//harmony.PatchAll(typeof(PongCheckActivationPatch)); //lags game
 			//harmony.PatchAll(typeof(BALLSetEntityValuesPatch)); //crashes game
 			harmony.PatchAll(typeof(CONSTRUCTORDownAirSwingAbilityPatch)); //doesnt work
-			harmony.PatchAll(typeof(CONSTRUCTOREatAbilityPatch)); //doesnt work
-			harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch)); //doesnt work
+			harmony.PatchAll(typeof(CONSTRUCTOREatAbilityPatch)); 
+			harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch)); 
+			harmony.PatchAll(typeof(MovableEntityMovementPatch)); 
 
 		}
 	}
@@ -69,7 +70,7 @@ namespace wallacepatch
 			{
 				ballEntity.StartHitstun(__instance.parryHitstunDuration, (ballEntity.ballData.ballState != BallState.BUBBLEBALL) ? HitstunState.WALL_STUN : HitstunState.BUBBLE_WALL_STUN);
 				ballEntity.DeflectClashPlayer((PlayerEntity)__instance, boxName);
-				
+
 			}
 			if (!__instance.MatchPowerupIs(LLHandlers.Powerup.PHANTOM, LLHandlers.PowerupPhase.ANY) && flag)
 			{
@@ -103,7 +104,7 @@ namespace wallacepatch
 				__instance.effectHandler.CreateHitBallBehindEffect(ballEntity.GetPosition());
 				ballEntity.CreateDeadBallEffect();
 				ballEntity.SetBallState(BallState.DEAD, HitstunState.NONE);
-				
+
 			}
 			__instance.AddTrackedHitEntityID(hitEntity.entityID);
 			__instance.RallyEvent(hitEntity);
@@ -288,7 +289,7 @@ namespace wallacepatch
 		{
 			if (state == "GET_UP_GRAB_PRE")
 			{
-				__return =  __instance.data.canBeHitByBall = false;
+				__return = __instance.data.canBeHitByBall = false;
 
 			}
 			if (state == "GET_UP_GRAB_DURING")
@@ -711,7 +712,7 @@ namespace wallacepatch
 			__instance.CreateHurtbox("LANDING_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(80, 94), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.DEKDADEGAIK, global::HHBCPNCDNDH.NKKIFJJEPOL(22)), fpixel_SIZE));
 			__instance.CreateHitbox("TAUNT_ACTION_HITBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(40, 60), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(global::HHBCPNCDNDH.NKKIFJJEPOL(50), global::HHBCPNCDNDH.NKKIFJJEPOL(10)), fpixel_SIZE), "BUNT_HIT", false, global::HHBCPNCDNDH.NKKIFJJEPOL(0.08m), string.Empty).bunts = true;
 			__instance.CreateHitbox("NEUTRAL_HITBOX", new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.GAFCIOAEGKD(sizeSwing.GCPKPHMKLBN, global::HHBCPNCDNDH.NKKIFJJEPOL(14)), fpixel_SIZE), global::HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, fpixel_SIZE)), new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.GAFCIOAEGKD(offsetSwing.GCPKPHMKLBN, global::HHBCPNCDNDH.NKKIFJJEPOL(7)), fpixel_SIZE), global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.CGJJEHPPOAN, fpixel_SIZE)), "SWING_HIT", false, global::HHBCPNCDNDH.NKKIFJJEPOL(0), "SWING_FULLCHARGE_HIT");
-			__instance.CreateHitbox("LANDING_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(sizeSwing, fpixel_SIZE), new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.GCPKPHMKLBN, fpixel_SIZE), global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.CGJJEHPPOAN, fpixel_SIZE)), "SMASH_FRONT_HIT", true, default(global::HHBCPNCDNDH), string.Empty);
+			__instance.CreateHitbox("SMASH_HITBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(sizeSwing, fpixel_SIZE), new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.GCPKPHMKLBN, fpixel_SIZE), global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.CGJJEHPPOAN, fpixel_SIZE)), "SMASH_FRONT_HIT", true, default(global::HHBCPNCDNDH), string.Empty);
 			__instance.parryBox = __instance.AddBox(new global::GameplayEntities.Box(__instance.GetPosition(), global::IBGCBLLKIHA.DBOMOJGKIFI, global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(100, 100), global::World.FPIXEL_SIZE), global::GameplayEntities.BoxType.OTHER, true));
 			__instance.counterParryBox = __instance.AddBox(new global::GameplayEntities.Box(__instance.GetPosition(), new global::IBGCBLLKIHA(global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.GCPKPHMKLBN, fpixel_SIZE), global::HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.CGJJEHPPOAN, fpixel_SIZE)), global::IBGCBLLKIHA.AJOCFFLIIIH(sizeSwing, fpixel_SIZE), global::GameplayEntities.BoxType.OTHER, true));
 			__instance.parryBox.parentless = true;
@@ -927,6 +928,10 @@ namespace wallacepatch
 			};
 			abilityState.canTurnOnStart = true;
 			abilityState.canBeCancelledByAnyAction = true;
+			abilityState.canMoveForwardCancel = true;
+			abilityState.canTurnCancel = true;
+			abilityState.canTurnOnStart = true;
+			abilityState.startBoost = true;
 			abilityState = __instance.AddSingleAbilityState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "STOP", global::Abilities.AbilityState.NO_ABILITYSTATE, "stop", __instance.framesDuration60fps(8), null, global::Abilities.AbilityGroundType.AIR));
 			abilityState.canBeCancelledByAnyAction = true;
 			abilityState.canTurnCancel = true;
@@ -975,24 +980,24 @@ namespace wallacepatch
 
 	class CONSTRUCTORTauntAbilityPatch
 	{
-			[HarmonyPatch(typeof(TauntAbility), MethodType.Constructor, new Type[] { typeof(AbilityEntity) })]
-			[HarmonyPrefix]
-			public static bool Prefix(TauntAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
-			{
-				__instance.Init("taunt", abilityEntity, InputAction.TAUNT, AbilityGroundType.GROUND, int.MaxValue, false, PlayerState.ACTION);
-				__instance.AddState(new AbilityState("TAUNT1", "taunt", __instance.entity.expressTauntPhase1Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
-				__instance.AddState(new AbilityState("TAUNT2", string.Empty, __instance.entity.expressTauntPhase2Duration, new List<string>
-			{
-				"TAUNT_ACTION_HITBOX"
-			}, AbilityGroundType.AIR)).castShadowForBag = false;
-				__instance.AddSingleState(new AbilityState("TAUNT_IDLE", "tauntIdle", HHBCPNCDNDH.NKKIFJJEPOL(AbilityState.NO_DURATION), new List<string>
+		[HarmonyPatch(typeof(TauntAbility), MethodType.Constructor, new Type[] { typeof(AbilityEntity) })]
+		[HarmonyPrefix]
+		public static bool Prefix(TauntAbility __instance, global::GameplayEntities.AbilityEntity abilityEntity)
+		{
+			__instance.Init("taunt", abilityEntity, InputAction.TAUNT, AbilityGroundType.GROUND, int.MaxValue, false, PlayerState.ACTION);
+			__instance.AddState(new AbilityState("TAUNT1", "taunt", __instance.entity.expressTauntPhase1Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
+			__instance.AddState(new AbilityState("TAUNT2", string.Empty, __instance.entity.expressTauntPhase2Duration, new List<string>
 			{
 				"TAUNT_ACTION_HITBOX"
 			}, AbilityGroundType.AIR)).castShadowForBag = false;
-				__instance.AddSingleState(new AbilityState("TAUNT_IDLE_OUT", "tauntOut", __instance.entity.expressTauntPhase2Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
-				return false;
-			}
-		
+			__instance.AddSingleState(new AbilityState("TAUNT_IDLE", "tauntIdle", HHBCPNCDNDH.NKKIFJJEPOL(AbilityState.NO_DURATION), new List<string>
+			{
+				"TAUNT_ACTION_HITBOX"
+			}, AbilityGroundType.AIR)).castShadowForBag = false;
+			__instance.AddSingleState(new AbilityState("TAUNT_IDLE_OUT", "tauntOut", __instance.entity.expressTauntPhase2Duration, string.Empty, AbilityGroundType.AIR)).castShadowForBag = false;
+			return false;
+		}
+
 	}
 	class CONSTRUCTOREatAbilityPatch
 	{
@@ -1076,6 +1081,140 @@ namespace wallacepatch
 			abilityState.castShadowForBag = false;
 			abilityState = __instance.AddSingleState(new AbilityState(GameplayEntities.PlayerState.ACTION, "DOWN_AIR_LAND", AbilityState.NO_ABILITYSTATE, "abilityLand", __instance.entity.framesDuration60fps(0xC), null, AbilityGroundType.AIR));
 			abilityState.moveableOn = AbilityGroundType.NONE;
+			return false;
+		}
+	}
+
+	class MovableEntityMovementPatch
+	{
+		[HarmonyPatch(typeof(MovableEntity), nameof(MovableEntity.Movement))]
+		[HarmonyPrefix]
+		public static bool Movement_Prefix(MovableEntity __instance)
+		{
+			if (global::HHBCPNCDNDH.OAHDEOGKOIM(__instance.moveableData.airControlTimer, global::HHBCPNCDNDH.DBOMOJGKIFI))
+			{
+				global::GameplayEntities.MovableData movableData = __instance.moveableData;
+				movableData.airControlTimer = global::HHBCPNCDNDH.FCKBPDNEAOG(movableData.airControlTimer, global::World.FDELTA_TIME);
+			}
+			global::IBGCBLLKIHA velocity = __instance.moveableData.velocity;
+			global::HHBCPNCDNDH gcpkphmklbn = (!__instance.OnGround()) ? __instance.airAcc : __instance.groundAcc;
+			global::HHBCPNCDNDH hhbcpncdndh = (!__instance.OnGround()) ? __instance.maxAirMove : __instance.maxMove;
+			hhbcpncdndh = global::HHBCPNCDNDH.GAFCIOAEGKD(hhbcpncdndh, global::HHBCPNCDNDH.NKKIFJJEPOL(0.3m));
+			bool flag = __instance.GetAnimDataOfVisual("main").currentAnim == "startRun" && global::HHBCPNCDNDH.HPLPMEAOJPM(__instance.GetAnimDataOfVisual("main").animTime, global::HHBCPNCDNDH.NKKIFJJEPOL(0m));
+			bool flag2 = __instance.GetInput(global::LLHandlers.InputAction.RIGHT) || (flag && __instance.moveableData.heading == global::GameplayEntities.Side.RIGHT);
+			bool flag3 = __instance.GetInput(global::LLHandlers.InputAction.LEFT) || (flag && __instance.moveableData.heading == global::GameplayEntities.Side.LEFT);
+			if (__instance.GetCurrentAbilityState().useUniqueAcc)
+			{
+				gcpkphmklbn = ((!__instance.OnGround()) ? __instance.GetCurrentAbilityState().airAcc : __instance.GetCurrentAbilityState().groundAcc);
+			}
+			if (__instance.GetCurrentAbilityState().useUniqueMaxMove)
+			{
+				hhbcpncdndh = __instance.GetCurrentAbilityState().maxMove;
+			}
+			global::GameplayEntities.PlayerState playerState = __instance.moveableData.playerState;
+			if (__instance.GetInputNew(global::LLHandlers.InputAction.UP) && !__instance.GetInputNew(global::LLHandlers.InputAction.DOWN))
+			{
+				__instance.moveableData.pivotBuffer = __instance.framesDuration60fps(8);
+			}
+			if (global::HHBCPNCDNDH.EAOICALCHJI(__instance.moveableData.pivotBuffer, global::HHBCPNCDNDH.DBOMOJGKIFI) && !__instance.MoveLock())
+			{
+				string currentAnim = __instance.GetAnimDataOfVisual("main").currentAnim;
+				if ((__instance.GetInputNew(global::LLHandlers.InputAction.LEFT) || __instance.GetInputNew(global::LLHandlers.InputAction.RIGHT)) && __instance.OnGround() && (__instance.moveableData.playerState == global::GameplayEntities.PlayerState.NORMAL || currentAnim == "stop" || currentAnim == "turnRun" || currentAnim == "turn" || currentAnim == "startRun"))
+				{
+					if (__instance.GetInputNew(global::LLHandlers.InputAction.LEFT))
+					{
+						global::LLHandlers.EffectHandler.instance.CreateSlowDustEffect(new global::IBGCBLLKIHA(global::HHBCPNCDNDH.FCKBPDNEAOG(__instance.GetPosition().GCPKPHMKLBN, global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.NKKIFJJEPOL(14m), global::World.FPIXEL_SIZE)), __instance.moveBox.bounds.MOGDHBGHAOA.CGJJEHPPOAN), global::GameplayEntities.Side.RIGHT);
+						__instance.SetMoveDirection(global::GameplayEntities.Side.LEFT, global::IBGCBLLKIHA.DBOMOJGKIFI);
+					}
+					else
+					{
+						global::LLHandlers.EffectHandler.instance.CreateSlowDustEffect(new global::IBGCBLLKIHA(global::HHBCPNCDNDH.GAFCIOAEGKD(__instance.GetPosition().GCPKPHMKLBN, global::HHBCPNCDNDH.AJOCFFLIIIH(global::HHBCPNCDNDH.NKKIFJJEPOL(46m), global::World.FPIXEL_SIZE)), __instance.moveBox.bounds.MOGDHBGHAOA.CGJJEHPPOAN), global::GameplayEntities.Side.LEFT);
+						__instance.SetMoveDirection(global::GameplayEntities.Side.RIGHT, global::IBGCBLLKIHA.DBOMOJGKIFI);
+					}
+					__instance.SetAbilityState("START_RUN");
+					__instance.moveableData.pivotBuffer = global::HHBCPNCDNDH.GANELPBAOPN(global::HHBCPNCDNDH.NPDCPLFLLIG(__instance.moveableData.pivotBuffer));
+				}
+				else if (global::HHBCPNCDNDH.OAHDEOGKOIM(__instance.moveableData.pivotBuffer, global::HHBCPNCDNDH.DBOMOJGKIFI))
+				{
+					global::GameplayEntities.MovableData movableData2 = __instance.moveableData;
+					movableData2.pivotBuffer = global::HHBCPNCDNDH.FCKBPDNEAOG(movableData2.pivotBuffer, __instance.framesDuration60fps(1));
+					if (global::HHBCPNCDNDH.HPLPMEAOJPM(__instance.moveableData.pivotBuffer, global::HHBCPNCDNDH.DBOMOJGKIFI))
+					{
+						__instance.moveableData.pivotBuffer = global::HHBCPNCDNDH.DBOMOJGKIFI;
+					}
+				}
+			}
+			if (global::HHBCPNCDNDH.HPLPMEAOJPM(__instance.moveableData.pivotBuffer, global::HHBCPNCDNDH.DBOMOJGKIFI))
+			{
+				if (__instance.moveableData.abilityState == "START_RUN" && !__instance.GetInput(global::LLHandlers.InputAction.LEFT) && !__instance.GetInput(global::LLHandlers.InputAction.RIGHT))
+				{
+					__instance.SetAbilityState("STOP");
+					if (flag2 || flag3)
+					{
+						__instance.Deaccelerate();
+					}
+					__instance.moveableData.pivotBuffer = global::HHBCPNCDNDH.NPDCPLFLLIG(__instance.moveableData.pivotBuffer);
+				}
+				else
+				{
+					global::GameplayEntities.MovableData movableData3 = __instance.moveableData;
+					movableData3.pivotBuffer = global::HHBCPNCDNDH.GAFCIOAEGKD(movableData3.pivotBuffer, __instance.framesDuration60fps(1));
+					if (global::HHBCPNCDNDH.OAHDEOGKOIM(__instance.moveableData.pivotBuffer, global::HHBCPNCDNDH.DBOMOJGKIFI))
+					{
+						__instance.moveableData.pivotBuffer = global::HHBCPNCDNDH.DBOMOJGKIFI;
+					}
+				}
+			}
+			if (((!__instance.CanMove(global::GameplayEntities.Side.RIGHT) && !__instance.CanMove(global::GameplayEntities.Side.LEFT)) || (!flag2 && !flag3) || (flag2 && flag3)) && global::HHBCPNCDNDH.CJBFNLGJNIH(__instance.moveableData.airControlTimer, global::HHBCPNCDNDH.NKKIFJJEPOL(0)) && (__instance.moveableData.hitstunState == global::GameplayEntities.HitstunState.NONE || __instance.moveableData.hitstunState == global::GameplayEntities.HitstunState.PARRY_KNOCKBACK_STUN))
+			{
+				__instance.Deaccelerate();
+				if (playerState == global::GameplayEntities.PlayerState.NORMAL && __instance.moveableData.hitstunState == global::GameplayEntities.HitstunState.NONE)
+				{
+					__instance.SetMoveDirection(global::GameplayEntities.Side.NONE, velocity);
+				}
+			}
+			else if (__instance.CanMove(global::GameplayEntities.Side.RIGHT) && flag2)
+			{
+				if (global::HHBCPNCDNDH.CJBFNLGJNIH(__instance.moveableData.airControlTimer, global::HHBCPNCDNDH.NKKIFJJEPOL(0)))
+				{
+					global::HHBCPNCDNDH gcpkphmklbn2 = global::HHBCPNCDNDH.GAFCIOAEGKD(__instance.moveableData.velocity.GCPKPHMKLBN, global::HHBCPNCDNDH.AJOCFFLIIIH(gcpkphmklbn, global::World.FDELTA_TIME));
+					if (global::HHBCPNCDNDH.CJBFNLGJNIH(__instance.moveableData.velocity.GCPKPHMKLBN, hhbcpncdndh) && global::HHBCPNCDNDH.OCDKNPDIPOB(gcpkphmklbn2, hhbcpncdndh))
+					{
+						__instance.moveableData.velocity.GCPKPHMKLBN = hhbcpncdndh;
+					}
+					else if (global::HHBCPNCDNDH.HPLPMEAOJPM(gcpkphmklbn2, hhbcpncdndh))
+					{
+						__instance.moveableData.velocity.GCPKPHMKLBN = gcpkphmklbn2;
+					}
+				}
+				if (playerState == global::GameplayEntities.PlayerState.NORMAL && global::HHBCPNCDNDH.CJBFNLGJNIH(__instance.moveableData.airControlTimer, global::HHBCPNCDNDH.NKKIFJJEPOL(0)) && __instance.moveableData.hitstunState == global::GameplayEntities.HitstunState.NONE)
+				{
+					__instance.SetMoveDirection(global::GameplayEntities.Side.RIGHT, velocity);
+				}
+			}
+			else if (__instance.CanMove(global::GameplayEntities.Side.LEFT) && flag3)
+			{
+				if (global::HHBCPNCDNDH.CJBFNLGJNIH(__instance.moveableData.airControlTimer, global::HHBCPNCDNDH.NKKIFJJEPOL(0)))
+				{
+					global::HHBCPNCDNDH gcpkphmklbn3 = global::HHBCPNCDNDH.FCKBPDNEAOG(__instance.moveableData.velocity.GCPKPHMKLBN, global::HHBCPNCDNDH.AJOCFFLIIIH(gcpkphmklbn, global::World.FDELTA_TIME));
+					if (global::HHBCPNCDNDH.OCDKNPDIPOB(__instance.moveableData.velocity.GCPKPHMKLBN, global::HHBCPNCDNDH.GANELPBAOPN(hhbcpncdndh)) && global::HHBCPNCDNDH.CJBFNLGJNIH(gcpkphmklbn3, global::HHBCPNCDNDH.GANELPBAOPN(hhbcpncdndh)))
+					{
+						__instance.moveableData.velocity.GCPKPHMKLBN = global::HHBCPNCDNDH.GANELPBAOPN(hhbcpncdndh);
+					}
+					else if (global::HHBCPNCDNDH.OAHDEOGKOIM(gcpkphmklbn3, global::HHBCPNCDNDH.GANELPBAOPN(hhbcpncdndh)))
+					{
+						__instance.moveableData.velocity.GCPKPHMKLBN = gcpkphmklbn3;
+					}
+				}
+				if (playerState == global::GameplayEntities.PlayerState.NORMAL && global::HHBCPNCDNDH.CJBFNLGJNIH(__instance.moveableData.airControlTimer, global::HHBCPNCDNDH.NKKIFJJEPOL(0)) && __instance.moveableData.hitstunState == global::GameplayEntities.HitstunState.NONE)
+				{
+					__instance.SetMoveDirection(global::GameplayEntities.Side.LEFT, velocity);
+				}
+			}
+			if (!__instance.entityData.onLeftWall && !__instance.entityData.onRightWall && __instance.OnGround() && global::HHBCPNCDNDH.EAOICALCHJI(__instance.moveableData.velocity.GCPKPHMKLBN, global::HHBCPNCDNDH.DBOMOJGKIFI) && global::HHBCPNCDNDH.ODMJDNBPOIH(velocity.GCPKPHMKLBN, global::HHBCPNCDNDH.DBOMOJGKIFI))
+			{
+				__instance.effectHandler.CreateStartMoveDustEffect(new global::IBGCBLLKIHA(__instance.GetPosition().GCPKPHMKLBN, __instance.moveBox.bounds.MOGDHBGHAOA.CGJJEHPPOAN), __instance.moveableData.heading);
+			}
 			return false;
 		}
 	}
