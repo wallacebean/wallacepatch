@@ -18,7 +18,7 @@ using BepInEx.Logging;
 
 namespace wallacepatch
 {
-	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.8")]
+	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.9")]
 	public class Plugin : BaseUnityPlugin
 
 	{
