@@ -9,15 +9,24 @@ using LLHandlers;
 using GameplayEntities;
 using LLGUI;
 using Abilities;
+using LLBML.Math;
+using System.Reflection;
+using System.Reflection.Emit;
+using LLBML.Players;
+using BepInEx.Logging;
 
 
 namespace wallacepatch
 {
-	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.7")]
+	[BepInPlugin("us.wallace.plugins.llb.wallacepatch", "wallacepatch Plug-In", "1.0.0.8")]
 	public class Plugin : BaseUnityPlugin
+
 	{
+		public static ManualLogSource Log { get; private set; } = null;
 		private void Awake()
 		{
+			Log = this.Logger;
+
 			Logger.LogDebug("Patching effects settings...");
 
 			var harmony = new Harmony("us.wallace.plugins.llb.wallacepatch");
@@ -40,7 +49,7 @@ namespace wallacepatch
 			harmony.PatchAll(typeof(CopPlayerSetEntityBoxesPatch));
 			harmony.PatchAll(typeof(CrocPlayerSetEntityBoxesPatch));
 			harmony.PatchAll(typeof(ElectroPlayerSetEntityBoxesPatch));
-			//harmony.PatchAll(typeof(GrafPlayerSetEntityBoxesPatch)); //crashes game
+			harmony.PatchAll(typeof(GrafSetNormalHitboxesPatch)); 
 			harmony.PatchAll(typeof(GrafSetFrontHitboxesAndParryBoxesPatch));
 			harmony.PatchAll(typeof(KidPlayerSetEntityBoxesPatch));
 			harmony.PatchAll(typeof(PongPlayerSetEntityBoxesPatch));
@@ -49,13 +58,36 @@ namespace wallacepatch
 			//harmony.PatchAll(typeof(BagCheckActivationPatch)); //lags game
 			//harmony.PatchAll(typeof(PongCheckActivationPatch)); //lags game
 			//harmony.PatchAll(typeof(BALLSetEntityValuesPatch)); //crashes game
-			harmony.PatchAll(typeof(CONSTRUCTORDownAirSwingAbilityPatch)); //doesnt work
-			harmony.PatchAll(typeof(CONSTRUCTOREatAbilityPatch)); 
-			harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch)); 
-			harmony.PatchAll(typeof(MovableEntityMovementPatch)); 
+			harmony.PatchAll(typeof(CONSTRUCTORDownAirSwingAbilityPatch));
+			harmony.PatchAll(typeof(CONSTRUCTOREatAbilityPatch));
+			harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch));
+			harmony.PatchAll(typeof(MovableEntityMovementPatch));
+			harmony.PatchAll(typeof(BAGMovementPatch));
 
 		}
 	}
+
+	public static class PatchUtils
+	{
+		public static void LogInstructions(IEnumerable<CodeInstruction> instructions, int from = 0, int to = -1)
+		{
+			int i = 0;
+			if (to == -1) to = instructions.Count();
+			foreach (var inst in instructions)
+			{
+				if (i >= from && i <= to)
+					Plugin.Log.LogDebug(i + ": " + inst);
+				i++;
+			}
+		}
+
+		public static void LogInstruction(CodeInstruction ci)
+		{
+			Plugin.Log.LogInfo("OpCode: " + ci.opcode + " | Operand: " + ci.operand);
+		}
+	}
+
+
 	class HandleHitboxHitPatch
 	{
 		[HarmonyPatch(typeof(HittingEntity), nameof(HittingEntity.HandleHitboxHit))]
@@ -70,7 +102,7 @@ namespace wallacepatch
 			{
 				ballEntity.StartHitstun(__instance.parryHitstunDuration, (ballEntity.ballData.ballState != BallState.BUBBLEBALL) ? HitstunState.WALL_STUN : HitstunState.BUBBLE_WALL_STUN);
 				ballEntity.DeflectClashPlayer((PlayerEntity)__instance, boxName);
-
+				return false;
 			}
 			if (!__instance.MatchPowerupIs(LLHandlers.Powerup.PHANTOM, LLHandlers.PowerupPhase.ANY) && flag)
 			{
@@ -104,7 +136,7 @@ namespace wallacepatch
 				__instance.effectHandler.CreateHitBallBehindEffect(ballEntity.GetPosition());
 				ballEntity.CreateDeadBallEffect();
 				ballEntity.SetBallState(BallState.DEAD, HitstunState.NONE);
-
+				return false;
 			}
 			__instance.AddTrackedHitEntityID(hitEntity.entityID);
 			__instance.RallyEvent(hitEntity);
@@ -255,6 +287,7 @@ namespace wallacepatch
 			return false;
 		}
 	}
+
 	class BALLSetEntityVisualsPatch
 	{
 		[HarmonyPatch(typeof(BallEntity), nameof(BallEntity.SetEntityVisuals))]
@@ -677,26 +710,21 @@ namespace wallacepatch
 
 	}
 
-	class GrafPlayerSetEntityBoxesPatch
+	class GrafSetNormalHitboxesPatch
 	{
-		[HarmonyPatch(typeof(GrafPlayer), nameof(GrafPlayer.SetEntityBoxes))]
+		[HarmonyPatch(typeof(PlayerEntity), nameof(PlayerEntity.SetNormalHitboxes))]
 		[HarmonyPrefix]
-		public static bool SetEntityBoxes_Prefix(GrafPlayer __instance)
+		public static bool SetNormalHitboxes_Prefix(PlayerEntity __instance, IBGCBLLKIHA sizeSwing, IBGCBLLKIHA offsetSwing, IBGCBLLKIHA sizeTop, IBGCBLLKIHA offsetTop)
 		{
-			global::HHBCPNCDNDH fpixel_SIZE = global::World.FPIXEL_SIZE;
-			__instance.moveBox = __instance.AddBox(new global::GameplayEntities.Box(__instance.GetPosition(), global::IBGCBLLKIHA.DBOMOJGKIFI, global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, __instance.pxHeight), fpixel_SIZE), global::GameplayEntities.BoxType.MOVEBOX, false));
-			__instance.moveBox.active = true;
-			__instance.CreateHurtbox("NORMAL_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, __instance.pxHeight), fpixel_SIZE), global::IBGCBLLKIHA.DBOMOJGKIFI);
-			__instance.CreateHurtbox("HALF_CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(60, 96), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.DEKDADEGAIK, global::HHBCPNCDNDH.NKKIFJJEPOL(21)), fpixel_SIZE));
-			__instance.CreateHurtbox("CROUCH_HURTBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(80, 64), fpixel_SIZE), global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.AJOCFFLIIIH(global::IBGCBLLKIHA.DEKDADEGAIK, global::HHBCPNCDNDH.NKKIFJJEPOL(37)), fpixel_SIZE));
-
-			__instance.graffitiBox = __instance.CreateHitbox("GRAFFITI_HITBOX", global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(150, 78), fpixel_SIZE), global::IBGCBLLKIHA.DBOMOJGKIFI, global::Abilities.AbilityState.NO_ABILITYSTATE, false, default(global::HHBCPNCDNDH), string.Empty);
-			__instance.graffitiBox.parentless = true;
-			__instance.graffitiBox.checkByHand = true;
-			__instance.graffitiBox.cantClash = true;
-			__instance.SetNormalHitboxes(new global::IBGCBLLKIHA(120, __instance.pxHeight), new global::IBGCBLLKIHA(55, 0), new global::IBGCBLLKIHA(110, 100), new global::IBGCBLLKIHA(0, 88));
-			__instance.SetEntityBoxes();
-
+			HHBCPNCDNDH fpixel_SIZE = World.FPIXEL_SIZE;
+			__instance.SetFrontHitboxesAndParryBoxes(sizeSwing, offsetSwing);
+			__instance.CreateHitbox("SMASH_TOP_HITBOX", IBGCBLLKIHA.AJOCFFLIIIH(sizeTop, fpixel_SIZE), IBGCBLLKIHA.AJOCFFLIIIH(offsetTop, fpixel_SIZE), "SMASH_OVERHEAD_HIT", true, default(HHBCPNCDNDH), string.Empty);
+			__instance.CreateHitbox("DOWN_AIR_HITBOX", new IBGCBLLKIHA(HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.AJOCFFLIIIH(sizeTop.GCPKPHMKLBN, fpixel_SIZE), HHBCPNCDNDH.NKKIFJJEPOL(1.1m)), HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.NKKIFJJEPOL(170), fpixel_SIZE)), new IBGCBLLKIHA(HHBCPNCDNDH.NKKIFJJEPOL(0), HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.NKKIFJJEPOL(-95), fpixel_SIZE)), "DOWN_AIR_HIT", false, default(HHBCPNCDNDH), string.Empty);
+			PlayerHitbox playerHitbox = __instance.CreateHitbox("BUNT_HITBOX", new IBGCBLLKIHA(HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.GCPKPHMKLBN, fpixel_SIZE), HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(.75m)), fpixel_SIZE)), new IBGCBLLKIHA(HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.GCPKPHMKLBN, fpixel_SIZE), HHBCPNCDNDH.FCKBPDNEAOG(offsetSwing.CGJJEHPPOAN, HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(0.125m)), fpixel_SIZE))), "BUNT_HIT", false, HHBCPNCDNDH.NKKIFJJEPOL(0.08m), string.Empty);
+			playerHitbox.bunts = true;
+			playerHitbox = __instance.CreateHitbox("BUNT_HITBOX2", new IBGCBLLKIHA(HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.GCPKPHMKLBN, HHBCPNCDNDH.NKKIFJJEPOL(0.75m)), fpixel_SIZE), HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.GAFCIOAEGKD(HHBCPNCDNDH.NKKIFJJEPOL(40), HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(0.25m))), fpixel_SIZE)), new IBGCBLLKIHA(HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.AJOCFFLIIIH(offsetSwing.GCPKPHMKLBN, HHBCPNCDNDH.NKKIFJJEPOL(1.25m)), fpixel_SIZE), HHBCPNCDNDH.AJOCFFLIIIH(HHBCPNCDNDH.FCKBPDNEAOG(HHBCPNCDNDH.GAFCIOAEGKD(HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(0.5m)), HHBCPNCDNDH.NKKIFJJEPOL(20)), HHBCPNCDNDH.AJOCFFLIIIH(sizeSwing.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(0.125m))), fpixel_SIZE)), "BUNT_HIT", false, HHBCPNCDNDH.NKKIFJJEPOL(0.08m), string.Empty);
+			playerHitbox.bunts = true;
+			__instance.CreateHurtbox("LIE_HURTBOX", IBGCBLLKIHA.AJOCFFLIIIH(new IBGCBLLKIHA(sizeSwing.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(45)), fpixel_SIZE), IBGCBLLKIHA.AJOCFFLIIIH(IBGCBLLKIHA.AJOCFFLIIIH(IBGCBLLKIHA.DEKDADEGAIK, HHBCPNCDNDH.NKKIFJJEPOL(40)), fpixel_SIZE));
 			return false;
 		}
 
@@ -931,7 +959,7 @@ namespace wallacepatch
 			abilityState.canMoveForwardCancel = true;
 			abilityState.canTurnCancel = true;
 			abilityState.canTurnOnStart = true;
-			abilityState.startBoost = true;
+
 			abilityState = __instance.AddSingleAbilityState(new global::Abilities.AbilityState(global::GameplayEntities.PlayerState.ACTION, "STOP", global::Abilities.AbilityState.NO_ABILITYSTATE, "stop", __instance.framesDuration60fps(8), null, global::Abilities.AbilityGroundType.AIR));
 			abilityState.canBeCancelledByAnyAction = true;
 			abilityState.canTurnCancel = true;
@@ -1216,6 +1244,140 @@ namespace wallacepatch
 				__instance.effectHandler.CreateStartMoveDustEffect(new global::IBGCBLLKIHA(__instance.GetPosition().GCPKPHMKLBN, __instance.moveBox.bounds.MOGDHBGHAOA.CGJJEHPPOAN), __instance.moveableData.heading);
 			}
 			return false;
+		}
+	}
+
+	public static class BAGMovementPatch
+	{
+
+		[HarmonyTranspiler]
+		[HarmonyPatch(typeof(BagPlayer), nameof(BagPlayer.Movement))]
+		public static IEnumerable<CodeInstruction> BagPlayerMovement_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator iL)
+		{
+			PatchUtils.LogInstructions(instructions, 0, 5);
+			CodeMatcher cm = new CodeMatcher(instructions, iL);
+			cm.Advance(3);
+
+			PatchUtils.LogInstruction(cm.InstructionAt(2));
+			var retLabel = cm.InstructionAt(2).operand;
+			try
+			{
+				cm.Insert(
+					new CodeInstruction(OpCodes.Ldarg_0),
+					Transpilers.EmitDelegate<Action<BagPlayer>>((BagPlayer __instance) =>
+					{
+						if (!__instance.OnGround() && __instance.abilityData.playerState == PlayerState.NORMAL &&
+							__instance.playerData.specialAmount == 0 && __instance.GetInput(InputAction.TAUNT) &&
+							HHBCPNCDNDH.HPLPMEAOJPM(__instance.playerData.velocity.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(6)) &&
+							__instance.playerData.extraJumps < 10 && HHBCPNCDNDH.CJBFNLGJNIH(__instance.playerData.reUseWallTimer, HHBCPNCDNDH.NKKIFJJEPOL(0)) &&
+							(HHBCPNCDNDH.OCDKNPDIPOB(__instance.playerData.specialFAmount, HHBCPNCDNDH.NKKIFJJEPOL(0)) || __instance.playerData.hasExtraAirMove))
+						{
+							__instance.SetAbilityState("BAG_KITE");
+							if (__instance.GetInputNew(InputAction.SWING))
+							{
+								if (__instance.GetInput(InputAction.DOWN))
+								{
+									__instance.StartAbility("downAirSwing");
+								}
+								else if (!__instance.GetInput(InputAction.UP) && (__instance.GetInput(InputAction.RIGHT) || __instance.GetInput(InputAction.LEFT)))
+								{
+									__instance.StartAbility("smash");
+								}
+								else
+								{
+									__instance.StartAbility("neutralSwing");
+								}
+							}
+							else if (__instance.GetInputNew(InputAction.BUNT))
+							{
+								__instance.StartAbility("bunt");
+							}
+							if (__instance.GetInputNew(InputAction.GRAB))
+							{
+								__instance.StartAbility("grab");
+							}
+						}
+					}),
+					new CodeInstruction(OpCodes.Br, retLabel) //position
+				);
+			}
+			catch (Exception e)
+			{
+				Plugin.Log.LogInfo(e);
+			}
+			PatchUtils.LogInstructions(cm.InstructionEnumeration(), 0, 5);
+			return cm.InstructionEnumeration();
+		}
+	}
+
+	public static class BAGUpdateSpecialPatch
+	{
+
+		[HarmonyTranspiler]
+		[HarmonyPatch(typeof(BagPlayer), nameof(BagPlayer.UpdateSpecial))]
+		public static IEnumerable<CodeInstruction> BagPlayerUpdateSpecial_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator iL)
+		{
+			PatchUtils.LogInstructions(instructions, 0, 5);
+			CodeMatcher cm = new CodeMatcher(instructions, iL);
+			cm.Advance(3);
+
+			PatchUtils.LogInstruction(cm.InstructionAt(2));
+			var retLabel = cm.InstructionAt(2).operand;
+			try
+			{
+				cm.Insert(
+					new CodeInstruction(OpCodes.Ldarg_0),
+					Transpilers.EmitDelegate<Action<BagPlayer>>((BagPlayer __instance) =>
+					{
+						global::GameplayEntities.PlayerData playerData = __instance.playerData;
+						playerData.abilityStateTimer = global::HHBCPNCDNDH.GAFCIOAEGKD(playerData.abilityStateTimer, global::World.FDELTA_TIME);
+						if (__instance.playerData.abilityState == "BAG_KITE")
+						{
+							__instance.Movement();
+							__instance.Gravity();
+							global::GameplayEntities.PlayerData playerData2 = __instance.playerData;
+							playerData2.specialFAmount = global::HHBCPNCDNDH.FCKBPDNEAOG(playerData2.specialFAmount, global::World.FDELTA_TIME);
+							if (!__instance.OnGround() && global::HHBCPNCDNDH.OAHDEOGKOIM(__instance.playerData.specialFAmount, global::HHBCPNCDNDH.NKKIFJJEPOL(0)) && (__instance.GetInput(global::LLHandlers.InputAction.JUMP) || global::HHBCPNCDNDH.OAHDEOGKOIM(__instance.playerData.reUseWallTimer, global::HHBCPNCDNDH.NKKIFJJEPOL(0))))
+							{
+								if (__instance.GetInputNew(global::LLHandlers.InputAction.SWING))
+								{
+									if (__instance.GetInput(global::LLHandlers.InputAction.DOWN))
+									{
+										__instance.StartAbility("downAirSwing");
+									}
+									else if (!__instance.GetInput(global::LLHandlers.InputAction.UP) && (__instance.GetInput(global::LLHandlers.InputAction.RIGHT) || __instance.GetInput(global::LLHandlers.InputAction.LEFT)))
+									{
+										__instance.StartAbility("smash");
+									}
+									else
+									{
+										__instance.StartAbility("neutralSwing");
+									}
+								}
+								else if (__instance.GetInputNew(global::LLHandlers.InputAction.BUNT))
+								{
+									__instance.StartAbility("bunt");
+								}
+								if (__instance.GetInputNew(global::LLHandlers.InputAction.GRAB))
+								{
+									__instance.StartAbility("grab");
+								}
+							}
+							else
+							{
+								__instance.StopKite();
+							}
+						}
+					}),
+					new CodeInstruction(OpCodes.Br, retLabel) //position
+				);
+			}
+			catch (Exception e)
+			{
+				Plugin.Log.LogInfo(e);
+			}
+			PatchUtils.LogInstructions(cm.InstructionEnumeration(), 0, 5);
+			return cm.InstructionEnumeration();
 		}
 	}
 }
