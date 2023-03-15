@@ -49,7 +49,7 @@ namespace wallacepatch
 			harmony.PatchAll(typeof(CopPlayerSetEntityBoxesPatch));
 			harmony.PatchAll(typeof(CrocPlayerSetEntityBoxesPatch));
 			harmony.PatchAll(typeof(ElectroPlayerSetEntityBoxesPatch));
-			harmony.PatchAll(typeof(GrafSetNormalHitboxesPatch)); 
+			harmony.PatchAll(typeof(GrafSetNormalHitboxesPatch));
 			harmony.PatchAll(typeof(GrafSetFrontHitboxesAndParryBoxesPatch));
 			harmony.PatchAll(typeof(KidPlayerSetEntityBoxesPatch));
 			harmony.PatchAll(typeof(PongPlayerSetEntityBoxesPatch));
@@ -63,7 +63,8 @@ namespace wallacepatch
 			harmony.PatchAll(typeof(CONSTRUCTORTauntAbilityPatch));
 			harmony.PatchAll(typeof(MovableEntityMovementPatch));
 			harmony.PatchAll(typeof(BAGMovementPatch));
-
+			harmony.PatchAll(typeof(BAGUpdateSpecialPatch));
+			//harmony.PatchAll(typeof(BAGSetEntityValuesPatch)); //needs transpiler
 		}
 	}
 
@@ -1269,7 +1270,7 @@ namespace wallacepatch
 						if (!__instance.OnGround() && __instance.abilityData.playerState == PlayerState.NORMAL &&
 							__instance.playerData.specialAmount == 0 && __instance.GetInput(InputAction.TAUNT) &&
 							HHBCPNCDNDH.HPLPMEAOJPM(__instance.playerData.velocity.CGJJEHPPOAN, HHBCPNCDNDH.NKKIFJJEPOL(6)) &&
-							__instance.playerData.extraJumps < 10 && HHBCPNCDNDH.CJBFNLGJNIH(__instance.playerData.reUseWallTimer, HHBCPNCDNDH.NKKIFJJEPOL(0)) &&
+							__instance.playerData.extraJumps <= 10 && HHBCPNCDNDH.CJBFNLGJNIH(__instance.playerData.reUseWallTimer, HHBCPNCDNDH.NKKIFJJEPOL(0)) &&
 							(HHBCPNCDNDH.OCDKNPDIPOB(__instance.playerData.specialFAmount, HHBCPNCDNDH.NKKIFJJEPOL(0)) || __instance.playerData.hasExtraAirMove))
 						{
 							__instance.SetAbilityState("BAG_KITE");
@@ -1312,73 +1313,88 @@ namespace wallacepatch
 
 	public static class BAGUpdateSpecialPatch
 	{
-
 		[HarmonyTranspiler]
 		[HarmonyPatch(typeof(BagPlayer), nameof(BagPlayer.UpdateSpecial))]
-		public static IEnumerable<CodeInstruction> BagPlayerUpdateSpecial_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator iL)
+		public static IEnumerable<CodeInstruction> BagPlayerUpdateSpecial_transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator iL)
 		{
-			PatchUtils.LogInstructions(instructions, 0, 5);
-			CodeMatcher cm = new CodeMatcher(instructions, iL);
-			cm.Advance(3);
 
-			PatchUtils.LogInstruction(cm.InstructionAt(2));
-			var retLabel = cm.InstructionAt(2).operand;
-			try
+			PatchUtils.LogInstructions(instructions, 33, 37);
+			CodeMatcher cm = new CodeMatcher(instructions, iL);
+
+			Label skipLabel = new Label();
+			foreach (var label in cm.DistinctLabels(instructions))
 			{
-				cm.Insert(
-					new CodeInstruction(OpCodes.Ldarg_0),
-					Transpilers.EmitDelegate<Action<BagPlayer>>((BagPlayer __instance) =>
-					{
-						global::GameplayEntities.PlayerData playerData = __instance.playerData;
-						playerData.abilityStateTimer = global::HHBCPNCDNDH.GAFCIOAEGKD(playerData.abilityStateTimer, global::World.FDELTA_TIME);
-						if (__instance.playerData.abilityState == "BAG_KITE")
-						{
-							__instance.Movement();
-							__instance.Gravity();
-							global::GameplayEntities.PlayerData playerData2 = __instance.playerData;
-							playerData2.specialFAmount = global::HHBCPNCDNDH.FCKBPDNEAOG(playerData2.specialFAmount, global::World.FDELTA_TIME);
-							if (!__instance.OnGround() && global::HHBCPNCDNDH.OAHDEOGKOIM(__instance.playerData.specialFAmount, global::HHBCPNCDNDH.NKKIFJJEPOL(0)) && (__instance.GetInput(global::LLHandlers.InputAction.JUMP) || global::HHBCPNCDNDH.OAHDEOGKOIM(__instance.playerData.reUseWallTimer, global::HHBCPNCDNDH.NKKIFJJEPOL(0))))
-							{
-								if (__instance.GetInputNew(global::LLHandlers.InputAction.SWING))
-								{
-									if (__instance.GetInput(global::LLHandlers.InputAction.DOWN))
-									{
-										__instance.StartAbility("downAirSwing");
-									}
-									else if (!__instance.GetInput(global::LLHandlers.InputAction.UP) && (__instance.GetInput(global::LLHandlers.InputAction.RIGHT) || __instance.GetInput(global::LLHandlers.InputAction.LEFT)))
-									{
-										__instance.StartAbility("smash");
-									}
-									else
-									{
-										__instance.StartAbility("neutralSwing");
-									}
-								}
-								else if (__instance.GetInputNew(global::LLHandlers.InputAction.BUNT))
-								{
-									__instance.StartAbility("bunt");
-								}
-								if (__instance.GetInputNew(global::LLHandlers.InputAction.GRAB))
-								{
-									__instance.StartAbility("grab");
-								}
-							}
-							else
-							{
-								__instance.StopKite();
-							}
-						}
-					}),
-					new CodeInstruction(OpCodes.Br, retLabel) //position
-				);
+				if (label.GetHashCode() == 3) skipLabel = label;
 			}
-			catch (Exception e)
-			{
-				Plugin.Log.LogInfo(e);
-			}
-			PatchUtils.LogInstructions(cm.InstructionEnumeration(), 0, 5);
+
+			cm.MatchForward(true, // false = move at the start of the match, true = move at the end of the match
+					new CodeMatch(OpCodes.Brfalse, skipLabel),
+					new CodeMatch(OpCodes.Ldarg_0),
+					new CodeMatch(OpCodes.Ldsfld));
+
+			PatchUtils.LogInstruction(cm.Instruction);
+			cm.Operand = typeof(InputAction).GetField(nameof(InputAction.TAUNT));
+			PatchUtils.LogInstruction(cm.Instruction);
+
+			PatchUtils.LogInstructions(cm.InstructionEnumeration(), 33, 37);
 			return cm.InstructionEnumeration();
 		}
 	}
-}
 
+	class BAGSetEntityValuesPatch
+	{
+		[HarmonyPatch(typeof(BagPlayer), nameof(BagPlayer.SetEntityValues))]
+		[HarmonyPrefix]
+		public static bool SetEntityValues_Prefix(BagPlayer __instance)
+		{
+			__instance.SetEntityValues();
+			__instance.gravityForce = global::HHBCPNCDNDH.NKKIFJJEPOL(34.5m);
+			__instance.gravityForceUp = global::HHBCPNCDNDH.NKKIFJJEPOL(46.2m);
+			__instance.gravityForceApex = global::HHBCPNCDNDH.NKKIFJJEPOL(10.8m);
+			__instance.kiteGravity = global::HHBCPNCDNDH.NKKIFJJEPOL(2m);
+			__instance.maxKiteFuel = global::HHBCPNCDNDH.NKKIFJJEPOL(2147483647m);
+			__instance.jumpPower = global::HHBCPNCDNDH.NKKIFJJEPOL(13.4m);
+			__instance.groundAcc = global::HHBCPNCDNDH.NKKIFJJEPOL(54m);
+			__instance.groundDeacc = global::HHBCPNCDNDH.NKKIFJJEPOL(54m);
+			__instance.airDeacc = global::HHBCPNCDNDH.NKKIFJJEPOL(9);
+			__instance.maxMove = global::HHBCPNCDNDH.NKKIFJJEPOL(6.7m);
+			__instance.maxAirMove = global::HHBCPNCDNDH.NKKIFJJEPOL(6.25m);
+			__instance.apexIn = global::HHBCPNCDNDH.NKKIFJJEPOL(2.4m);
+			__instance.apexOut = global::HHBCPNCDNDH.NKKIFJJEPOL(-2.4m);
+			__instance.gravityForceFastFall = global::HHBCPNCDNDH.NKKIFJJEPOL(18m);
+			__instance.maxGravity = global::HHBCPNCDNDH.NKKIFJJEPOL(12);
+			__instance.extraJumpPower = global::HHBCPNCDNDH.NKKIFJJEPOL(11.3m);
+			__instance.preWindUpDuration = __instance.framesDuration60fps(7);
+			__instance.windUpDuration = __instance.framesDuration60fps(6);
+			__instance.swing1Duration = __instance.framesDuration60fps(4);
+			__instance.swing2Duration = __instance.framesDuration60fps(3);
+			__instance.followThroughDuration = __instance.framesDuration60fps(8);
+			__instance.swingReturnDuration = __instance.framesDuration60fps(3);
+			__instance.preBuntDuration = __instance.framesDuration60fps(4);
+			__instance.buntInDuration = __instance.framesDuration60fps(10);
+			__instance.buntWooshDuration = __instance.framesDuration60fps(3);
+			__instance.buntOutDuration = __instance.framesDuration60fps(8);
+			__instance.smashWindUpDuration = __instance.framesDuration60fps(5);
+			__instance.smashReadyDuration = __instance.framesDuration60fps(9);
+			__instance.smashOverheadSwingDuration = __instance.framesDuration60fps(4);
+			__instance.smashFrontSwingDuration = __instance.framesDuration60fps(3);
+			__instance.smashOutDuration = __instance.framesDuration60fps(11);
+			__instance.hitAngleDown = 57;
+			__instance.hitAngleUp = 345;
+			__instance.hitAngleNeutralDownAir = 21;
+			__instance.hitAngleSmash = 33;
+			__instance.hitAngleDownAirForward = 44;
+			__instance.hitAngleDownAirBackward = 163;
+			__instance.hitAngleUpForward = __instance.hitAngleUp;
+			__instance.hitAngleDownShadow = global::HHBCPNCDNDH.NKKIFJJEPOL(57);
+			__instance.hitAngleUpShadow = global::HHBCPNCDNDH.NKKIFJJEPOL(315);
+			__instance.specialShineOffset = global::IBGCBLLKIHA.AJOCFFLIIIH(new global::IBGCBLLKIHA(-5, 45), global::World.FPIXEL_SIZE);
+			__instance.chargeMaxDuration = __instance.framesDuration60fps(16);
+			__instance.expressTauntPhase1Duration = __instance.framesDuration60fps(87);
+			__instance.expressTauntPhase2Duration = __instance.framesDuration60fps(3);
+			__instance.pxHeight = 142;
+			__instance.throwOffset = new global::IBGCBLLKIHA(global::HHBCPNCDNDH.NKKIFJJEPOL(0.8m), global::HHBCPNCDNDH.NKKIFJJEPOL(0.2m));
+			return false;
+		}
+	}
+}
